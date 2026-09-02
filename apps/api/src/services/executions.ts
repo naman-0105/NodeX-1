@@ -59,3 +59,30 @@ export async function cancelExecution(id: string) {
   }
   return cancelled;
 }
+
+export async function submitTaskApproval(
+  executionId: string,
+  taskId: string,
+  decision: { approved: boolean; approver?: string; comments?: string }
+) {
+  const execution = await executionRepo.getExecutionById(executionId);
+  if (!execution) {
+    throw new NotFoundError(`Execution not found: ${executionId}`);
+  }
+
+  try {
+    return await executionRepo.submitApprovalDecision(executionId, taskId, decision);
+  } catch (err: any) {
+    throw new ValidationError(err.message);
+  }
+}
+
+export async function getPendingApprovals(executionId?: string) {
+  if (executionId) {
+    const execution = await executionRepo.getExecutionById(executionId);
+    if (!execution) {
+      throw new NotFoundError(`Execution not found: ${executionId}`);
+    }
+  }
+  return executionRepo.getPendingApprovals(executionId);
+}

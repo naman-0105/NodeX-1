@@ -5,6 +5,7 @@ import {
   workflowSchedules,
   workflows,
   executions,
+  taskInstances,
   outboxEvents,
   eq,
   sql,
@@ -114,6 +115,76 @@ export async function pollAndTriggerDueSchedules(batchSize: number = 20): Promis
   });
 }
 
+/**
+ * Scans for due delay tasks in WAITING status (output_json->>'resumeAt' <= NOW())
+ * and re-enqueues their executions via outbox.
+ */
+export async function pollAndResumeDueDelays(batchSize: number = 20): Promise<number> {
+  return withTransaction(async (tx) => {
+    const dueTasks = await tx
+      .select({
+        id: taskInstances.id,
+        executionId: taskInstances.executionId,
+        nodeId: taskInstances.nodeId,
+        outputJson: taskInstances.outputJson,
+      })
+      .from(taskInstances)
+      .where(
+        and(
+          eq(taskInstances.status, 'WAITING'),
+          sql`(output_json->>'resumeAt') IS NOT NULL`,
+          sql`(output_json->>'resumeAt')::timestamptz <= NOW()`
+        )
+      )
+      .limit(batchSize)
+      .for('update', { skipLocked: true });
+
+    if (dueTasks.length === 0) {
+      return 0;
+    }
+
+    for (const task of dueTasks) {
+      const currentOutput = (task.outputJson || {}) as Record<string, unknown>;
+      const updatedOutput = {
+        ...currentOutput,
+        resumedAt: new Date().toISOString(),
+      };
+
+      // Mark task as SUCCEEDED
+      await tx
+        .update(taskInstances)
+        .set({
+          status: 'SUCCEEDED',
+          outputJson: updatedOutput,
+          finishedAt: sql`NOW()`,
+          updatedAt: sql`NOW()`,
+        })
+        .where(eq(taskInstances.id, task.id));
+
+      // Re-enqueue execution
+      await tx
+        .update(executions)
+        .set({
+          status: 'QUEUED',
+          updatedAt: sql`NOW()`,
+        })
+        .where(eq(executions.id, task.executionId));
+
+      await tx.insert(outboxEvents).values({
+        aggregateId: task.executionId,
+        eventType: 'execution.queued',
+        payloadJson: {
+          executionId: task.executionId,
+          resumedFromTaskId: task.id,
+          reason: 'DELAY_EXPIRED_RESUME',
+        },
+      });
+    }
+
+    return dueTasks.length;
+  });
+}
+
 export class SchedulePollerService {
   private timer: NodeJS.Timeout | null = null;
   private isRunning = false;
@@ -133,6 +204,7 @@ export class SchedulePollerService {
         this.isPolling = true;
         try {
           await pollAndTriggerDueSchedules(batchSize);
+          await pollAndResumeDueDelays(batchSize);
         } catch (err) {
           console.error('Error in schedule poller cycle:', err);
         } finally {

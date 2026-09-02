@@ -3,6 +3,8 @@ import { TriggerNode } from './trigger.js';
 import { HttpNode } from './http.js';
 import { TransformNode } from './transform.js';
 import { IfNode } from './if.js';
+import { ApprovalNode } from './approval.js';
+import { DelayNode } from './delay.js';
 
 export class NodeRegistry {
   private readonly nodes = new Map<string, WorkflowNode>();
@@ -37,6 +39,8 @@ export function createDefaultNodeRegistry(): NodeRegistry {
   registry.register(new HttpNode());
   registry.register(new TransformNode());
   registry.register(new IfNode());
+  registry.register(new ApprovalNode());
+  registry.register(new DelayNode());
   return registry;
 }
 

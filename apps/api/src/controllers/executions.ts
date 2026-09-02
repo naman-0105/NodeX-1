@@ -12,6 +12,11 @@ export const listExecutionsQuerySchema = z.object({
   offset: z.coerce.number().min(0).default(0),
 });
 
+export const approvalDecisionSchema = z.object({
+  approver: z.string().optional(),
+  comments: z.string().optional(),
+});
+
 function getParam(req: Request, key: string): string {
   const val = req.params[key];
   return Array.isArray(val) ? val[0] : (val as string);
@@ -94,6 +99,80 @@ export async function cancelExecutionHandler(
       status: cancelled.status,
       finishedAt: cancelled.finishedAt,
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function approveTaskHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const executionId = getParam(req, 'id');
+    const taskId = getParam(req, 'taskId');
+    const approver = req.body.approver || 'system_user';
+    const comments = req.body.comments;
+
+    const result = await executionService.submitTaskApproval(executionId, taskId, {
+      approved: true,
+      approver,
+      comments,
+    });
+
+    res.json({
+      success: true,
+      message: 'Task approved and workflow resumed',
+      executionId: result.execution.id,
+      executionStatus: result.execution.status,
+      taskId: result.task.id,
+      taskStatus: result.task.status,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function rejectTaskHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const executionId = getParam(req, 'id');
+    const taskId = getParam(req, 'taskId');
+    const approver = req.body.approver || 'system_user';
+    const comments = req.body.comments;
+
+    const result = await executionService.submitTaskApproval(executionId, taskId, {
+      approved: false,
+      approver,
+      comments,
+    });
+
+    res.json({
+      success: true,
+      message: 'Task rejected and workflow marked failed',
+      executionId: result.execution.id,
+      executionStatus: result.execution.status,
+      taskId: result.task.id,
+      taskStatus: result.task.status,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getPendingApprovalsHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const executionId = req.params.id ? getParam(req, 'id') : undefined;
+    const approvals = await executionService.getPendingApprovals(executionId);
+    res.json({ pendingApprovals: approvals });
   } catch (err) {
     next(err);
   }

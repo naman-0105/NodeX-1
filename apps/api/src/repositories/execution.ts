@@ -123,3 +123,136 @@ export async function cancelExecution(id: string) {
 
   return cancelled || null;
 }
+
+export async function submitApprovalDecision(
+  executionId: string,
+  taskId: string,
+  decision: { approved: boolean; approver?: string; comments?: string }
+) {
+  return withTransaction(async (tx) => {
+    // 1. Fetch task instance with lock
+    const [task] = await tx
+      .select()
+      .from(taskInstances)
+      .where(
+        and(
+          eq(taskInstances.id, taskId),
+          eq(taskInstances.executionId, executionId)
+        )
+      )
+      .limit(1)
+      .for('update');
+
+    if (!task) {
+      throw new Error(`Task instance not found: ${taskId}`);
+    }
+    if (task.status !== 'WAITING') {
+      throw new Error(`Task ${taskId} is not waiting for approval (current status: ${task.status})`);
+    }
+
+    const decisionPayload = {
+      decision: {
+        approved: decision.approved,
+        approver: decision.approver || 'system_admin',
+        comments: decision.comments || '',
+        decisionAt: new Date().toISOString(),
+      },
+    };
+
+    // 2. Update task instance
+    const [updatedTask] = await tx
+      .update(taskInstances)
+      .set({
+        status: decision.approved ? 'SUCCEEDED' : 'FAILED',
+        outputJson: decisionPayload,
+        finishedAt: sql`NOW()`,
+        updatedAt: sql`NOW()`,
+      })
+      .where(eq(taskInstances.id, taskId))
+      .returning();
+
+    // 3. Append execution event
+    const [latestEvent] = await tx
+      .select({ sequence: executionEvents.sequence })
+      .from(executionEvents)
+      .where(eq(executionEvents.executionId, executionId))
+      .orderBy(desc(executionEvents.sequence))
+      .limit(1);
+
+    const nextSeq = (latestEvent?.sequence ?? 0) + 1;
+    await tx.insert(executionEvents).values({
+      executionId,
+      sequence: nextSeq,
+      eventType: decision.approved ? 'task.approved' : 'task.rejected',
+      payloadJson: {
+        taskId,
+        nodeId: task.nodeId,
+        ...decisionPayload,
+      },
+    });
+
+    // 4. Update execution and queue continuation if approved
+    if (decision.approved) {
+      const [updatedExec] = await tx
+        .update(executions)
+        .set({
+          status: 'QUEUED',
+          updatedAt: sql`NOW()`,
+        })
+        .where(eq(executions.id, executionId))
+        .returning();
+
+      // Enqueue continuation job via transactional outbox
+      await tx.insert(outboxEvents).values({
+        aggregateId: executionId,
+        eventType: 'execution.queued',
+        payloadJson: {
+          executionId,
+          resumedFromTaskId: taskId,
+          triggerType: 'continuation',
+        },
+      });
+
+      return {
+        task: updatedTask,
+        execution: updatedExec,
+      };
+    } else {
+      const [failedExec] = await tx
+        .update(executions)
+        .set({
+          status: 'FAILED',
+          finishedAt: sql`NOW()`,
+          updatedAt: sql`NOW()`,
+        })
+        .where(eq(executions.id, executionId))
+        .returning();
+
+      return {
+        task: updatedTask,
+        execution: failedExec,
+      };
+    }
+  });
+}
+
+export async function getPendingApprovals(executionId?: string) {
+  if (executionId) {
+    return db
+      .select()
+      .from(taskInstances)
+      .where(
+        and(
+          eq(taskInstances.executionId, executionId),
+          eq(taskInstances.status, 'WAITING')
+        )
+      )
+      .orderBy(asc(taskInstances.createdAt));
+  }
+
+  return db
+    .select()
+    .from(taskInstances)
+    .where(eq(taskInstances.status, 'WAITING'))
+    .orderBy(asc(taskInstances.createdAt));
+}

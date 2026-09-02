@@ -7,6 +7,8 @@ export * from './nodes/trigger.js';
 export * from './nodes/http.js';
 export * from './nodes/transform.js';
 export * from './nodes/if.js';
+export * from './nodes/approval.js';
+export * from './nodes/delay.js';
 export * from './reliability/lease.js';
 export * from './reliability/heartbeat.js';
 export * from './reliability/retry.js';
