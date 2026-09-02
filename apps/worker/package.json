@@ -1,0 +1,30 @@
+{
+  "name": "@nodex/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@nodex/db": "workspace:*",
+    "@nodex/shared": "workspace:*",
+    "dotenv": "^16.4.7",
+    "jsep": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.3"
+  }
+}
