@@ -49,8 +49,8 @@ export function createStepScope(
   const scope: Record<string, unknown> = {};
 
   for (const [nodeId, data] of Object.entries(stepOutputs || {})) {
-    let outputVal: unknown;
-    let errorVal: unknown;
+    let outputVal: any;
+    let errorVal: any;
 
     if (data && typeof data === 'object' && ('output' in data || 'error' in data)) {
       outputVal = (data as any).output;
@@ -59,8 +59,20 @@ export function createStepScope(
       outputVal = data;
     }
 
+    const outputTarget = outputVal && typeof outputVal === 'object' ? outputVal : {};
+    const outputProxy = new Proxy(outputTarget, {
+      get(target: any, prop: string | symbol) {
+        if (typeof prop !== 'string') return target[prop];
+        if (prop in target) return target[prop];
+        if (target.result && typeof target.result === 'object' && prop in target.result) {
+          return target.result[prop];
+        }
+        return target[prop];
+      },
+    });
+
     const nodeTarget = {
-      output: outputVal,
+      output: outputProxy,
       error: errorVal,
     };
 
@@ -69,8 +81,11 @@ export function createStepScope(
         if (typeof prop !== 'string') return target[prop];
         if (prop === 'output') return target.output;
         if (prop === 'error') return target.error;
-        if (target.output && typeof target.output === 'object' && prop in target.output) {
-          return target.output[prop];
+        if (outputVal && typeof outputVal === 'object') {
+          if (prop in outputVal) return outputVal[prop];
+          if (outputVal.result && typeof outputVal.result === 'object' && prop in outputVal.result) {
+            return outputVal.result[prop];
+          }
         }
         return target[prop];
       },

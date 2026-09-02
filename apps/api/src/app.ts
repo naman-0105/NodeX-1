@@ -3,6 +3,7 @@ import cors from 'cors';
 import { workflowRouter } from './routes/workflows.js';
 import { executionRouter } from './routes/executions.js';
 import { webhookRouter } from './routes/webhooks.js';
+import { metricsRouter } from './routes/metrics.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { checkHealth } from '@nodex/db';
 
@@ -26,6 +27,7 @@ export function createApp(): Express {
   app.use('/api/workflows', workflowRouter);
   app.use('/api/executions', executionRouter);
   app.use('/api/webhooks', webhookRouter);
+  app.use('/api/metrics', metricsRouter);
 
   // Centralized Error Handler (must be last middleware)
   app.use(errorHandler);

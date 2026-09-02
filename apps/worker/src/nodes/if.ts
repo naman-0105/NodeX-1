@@ -2,7 +2,8 @@ import type { WorkflowNode, ExecutionContext, NodeResult } from '@nodex/shared';
 import { evaluateExpression } from '../engine/evaluator.js';
 
 export interface IfNodeInput {
-  readonly expression: string;
+  readonly expression?: string;
+  readonly condition?: string;
 }
 
 export interface IfNodeOutput {
@@ -14,13 +15,16 @@ export class IfNode implements WorkflowNode<IfNodeInput, IfNodeOutput> {
   readonly type = 'if';
 
   validate(input: IfNodeInput): void {
-    if (!input || typeof input.expression !== 'string' || !input.expression.trim()) {
-      throw new Error('IfNode requires a valid "expression" string in its configuration');
+    const expr = input?.expression || input?.condition;
+    if (!expr || typeof expr !== 'string' || !expr.trim()) {
+      throw new Error('IfNode requires a valid "expression" or "condition" string in its configuration');
     }
   }
 
   async execute(input: IfNodeInput, context: ExecutionContext): Promise<NodeResult<IfNodeOutput>> {
     this.validate(input);
+
+    const expr = (input.expression || input.condition)!.trim();
 
     try {
       const stepsContext: Record<string, { output?: unknown; error?: unknown }> = {};
@@ -32,7 +36,7 @@ export class IfNode implements WorkflowNode<IfNodeInput, IfNodeOutput> {
         }
       }
 
-      const evalResult = evaluateExpression(input.expression, {
+      const evalResult = evaluateExpression(expr, {
         steps: stepsContext,
         trigger: context.triggerPayload as Record<string, unknown>,
         env: context.env as Record<string, string>,
@@ -53,7 +57,7 @@ export class IfNode implements WorkflowNode<IfNodeInput, IfNodeOutput> {
           message: `IfNode expression evaluation failed: ${err.message}`,
           code: 'IF_EXPRESSION_ERROR',
           retriable: false,
-          details: { expression: input.expression },
+          details: { expression: expr },
         },
       };
     }

@@ -33,9 +33,9 @@ export class TransformNode implements WorkflowNode<TransformNodeInput, Transform
       const sandboxRes = await runSandboxedCode(
         input.code,
         {
-          input: input.input,
+          input: input.input ?? {},
           steps: createStepScope(context.stepOutputs as Record<string, unknown>),
-          trigger: context.triggerPayload as Record<string, unknown>,
+          trigger: context.triggerPayload ?? {},
         },
         {
           timeoutMs: input.timeoutMs ?? 2000,
