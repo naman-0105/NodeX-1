@@ -149,6 +149,7 @@ export async function createWorkflowVersion(
     return {
       workflow: updatedWf,
       version: newVersion,
+      currentVersion: newVersion,
     };
   });
 }

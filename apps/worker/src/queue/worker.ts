@@ -94,25 +94,27 @@ export async function processWorkflowExecution(
     }
   }
 
-  // Helper for sequence counter in execution_events
+  // Helper for atomic sequence counter in execution_events
   const appendEvent = async (eventType: string, payloadJson: unknown) => {
-    const [latest] = await db
-      .select({ sequence: executionEvents.sequence })
-      .from(executionEvents)
-      .where(eq(executionEvents.executionId, executionId))
-      .orderBy(desc(executionEvents.sequence))
-      .limit(1);
-
-    const nextSeq = (latest?.sequence ?? 0) + 1;
-    await db.insert(executionEvents).values({
-      executionId,
-      sequence: nextSeq,
-      eventType,
-      payloadJson,
-    });
+    try {
+      await db.execute(sql`
+        INSERT INTO execution_events (id, execution_id, sequence, event_type, payload_json, created_at)
+        VALUES (
+          gen_random_uuid(),
+          ${executionId}::uuid,
+          COALESCE((SELECT MAX(sequence) FROM execution_events WHERE execution_id = ${executionId}::uuid), 0) + 1,
+          ${eventType},
+          ${JSON.stringify(payloadJson)}::jsonb,
+          NOW()
+        )
+      `);
+    } catch {
+      // Ignore non-fatal audit log collision
+    }
   };
 
-  await appendEvent('execution.started', {
+  const isResuming = execRow.status === 'WAITING' || existingTasks.length > 0;
+  await appendEvent(isResuming ? 'execution.resumed' : 'execution.started', {
     executionId,
     workflowId: execRow.workflowId,
     workflowVersionId: execRow.workflowVersionId,

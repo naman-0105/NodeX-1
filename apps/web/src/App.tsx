@@ -142,8 +142,9 @@ export function App() {
 
     try {
       const updated = await publishWorkflowVersion(currentWorkflowId, definition);
-      setCurrentVersionNumber(updated.currentVersion.version);
-      alert(`Successfully published version v${updated.currentVersion.version}!`);
+      const versionNum = updated.currentVersion?.version ?? (updated as any).version?.version ?? 1;
+      setCurrentVersionNumber(versionNum);
+      alert(`Successfully published version v${versionNum}!`);
     } catch (err: any) {
       alert(`Error publishing version: ${err.message}`);
     }

@@ -18,3 +18,30 @@ export * from './outbox/poller.js';
 export * from './queue/connection.js';
 export * from './queue/queues.js';
 export * from './queue/worker.js';
+
+import dotenv from 'dotenv';
+import { WorkflowWorkerService } from './queue/worker.js';
+import { OutboxPollerService } from './outbox/poller.js';
+
+dotenv.config();
+
+// If run directly as worker process entrypoint
+if (process.env.NODE_ENV !== 'test') {
+  const workerService = new WorkflowWorkerService();
+  const outboxPoller = new OutboxPollerService();
+
+  console.log('🚀 Starting NodeX Workflow Worker & Outbox Poller...');
+  workerService.start();
+  outboxPoller.start();
+
+  const handleShutdown = async () => {
+    console.log('🛑 Shutting down worker...');
+    outboxPoller.stop();
+    await workerService.stop();
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', handleShutdown);
+  process.on('SIGINT', handleShutdown);
+}
+

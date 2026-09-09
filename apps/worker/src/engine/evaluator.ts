@@ -41,12 +41,13 @@ const ALLOWED_GLOBALS: Record<string, unknown> = {
 };
 
 /**
- * Creates a smart step scope proxy allowing both `steps.n1.output.x` and `steps.n1.x` syntax.
+ * Creates a smart step scope proxy allowing both `steps.n1.output.x`, `steps.n1.x`, `steps.n1.data.x`,
+ * and flexible prefix matching (e.g. steps.http_fetch / steps.http).
  */
 export function createStepScope(
   stepOutputs: Record<string, unknown>
 ): Record<string, unknown> {
-  const scope: Record<string, unknown> = {};
+  const map: Record<string, any> = {};
 
   for (const [nodeId, data] of Object.entries(stepOutputs || {})) {
     let outputVal: any;
@@ -67,6 +68,9 @@ export function createStepScope(
         if (target.result && typeof target.result === 'object' && prop in target.result) {
           return target.result[prop];
         }
+        if (target.data && typeof target.data === 'object' && prop in target.data) {
+          return target.data[prop];
+        }
         return target[prop];
       },
     });
@@ -76,7 +80,7 @@ export function createStepScope(
       error: errorVal,
     };
 
-    scope[nodeId] = new Proxy(nodeTarget, {
+    const nodeProxy = new Proxy(nodeTarget, {
       get(target: any, prop: string | symbol) {
         if (typeof prop !== 'string') return target[prop];
         if (prop === 'output') return target.output;
@@ -86,13 +90,32 @@ export function createStepScope(
           if (outputVal.result && typeof outputVal.result === 'object' && prop in outputVal.result) {
             return outputVal.result[prop];
           }
+          if (outputVal.data && typeof outputVal.data === 'object' && prop in outputVal.data) {
+            return outputVal.data[prop];
+          }
         }
         return target[prop];
       },
     });
+
+    map[nodeId] = nodeProxy;
+    const typePrefix = nodeId.split('_')[0];
+    if (typePrefix && !map[typePrefix]) {
+      map[typePrefix] = nodeProxy;
+    }
   }
 
-  return scope;
+  return new Proxy(map, {
+    get(target: any, prop: string | symbol) {
+      if (typeof prop !== 'string') return target[prop];
+      if (prop in target) return target[prop];
+      const matchedKey = Object.keys(target).find(
+        (k) => k.toLowerCase() === prop.toLowerCase() || k.startsWith(`${prop}_`) || prop.startsWith(`${k}_`)
+      );
+      if (matchedKey) return target[matchedKey];
+      return undefined;
+    },
+  });
 }
 
 /**

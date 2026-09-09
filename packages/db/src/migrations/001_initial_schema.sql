@@ -172,3 +172,9 @@ CREATE TABLE IF NOT EXISTS dead_letter_tasks (
 
 CREATE INDEX IF NOT EXISTS idx_dead_letter_tasks_execution ON dead_letter_tasks (execution_id);
 CREATE INDEX IF NOT EXISTS idx_dead_letter_tasks_replay_status ON dead_letter_tasks (replay_status);
+
+-- Seed default developer user
+INSERT INTO users (id, email, password_hash, role)
+VALUES ('00000000-0000-0000-0000-000000000001', 'dev@nodex.local', 'dev_default_hash', 'admin')
+ON CONFLICT (id) DO NOTHING;
+

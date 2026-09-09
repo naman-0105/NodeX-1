@@ -15,6 +15,7 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "migrate": "node --loader ts-node/esm src/migrate.ts",
+    "studio": "drizzle-kit studio",
     "clean": "rimraf dist"
   },
   "dependencies": {
