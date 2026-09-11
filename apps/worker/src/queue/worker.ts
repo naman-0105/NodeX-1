@@ -2,9 +2,12 @@ import { Worker, type Job } from 'bullmq';
 import {
   db,
   executions,
+  workflows,
   workflowVersions,
   taskInstances,
   executionEvents,
+  credentials,
+  decrypt,
   eq,
   sql,
   desc,
@@ -40,12 +43,17 @@ export async function processWorkflowExecution(
     .select({
       id: executions.id,
       workflowId: executions.workflowId,
+      ownerId: workflows.ownerId,
       workflowVersionId: executions.workflowVersionId,
       triggerType: executions.triggerType,
       status: executions.status,
       definitionJson: workflowVersions.definitionJson,
     })
     .from(executions)
+    .innerJoin(
+      workflows,
+      eq(executions.workflowId, workflows.id)
+    )
     .innerJoin(
       workflowVersions,
       eq(executions.workflowVersionId, workflowVersions.id)
@@ -246,6 +254,34 @@ export async function processWorkflowExecution(
       }
     }
 
+    // Load decrypted credentials for workflow owner
+    const ownerCredentials: Record<string, any> = {};
+    if (execRow.ownerId) {
+      try {
+        const credRows = await db
+          .select()
+          .from(credentials)
+          .where(eq(credentials.ownerId, execRow.ownerId));
+
+        for (const cred of credRows) {
+          try {
+            const decryptedStr = decrypt(cred.encryptedData);
+            let parsedData: any;
+            try {
+              parsedData = JSON.parse(decryptedStr);
+            } catch {
+              parsedData = { accessToken: decryptedStr };
+            }
+            ownerCredentials[cred.provider] = parsedData;
+          } catch (err) {
+            console.warn(`Failed to decrypt credential for provider ${cred.provider}:`, err);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to query credentials for execution owner:', err);
+      }
+    }
+
     const nodeExecutor = registry.get(nodeDef.type);
     const executionContext: ExecutionContext = {
       executionId,
@@ -256,6 +292,7 @@ export async function processWorkflowExecution(
       attempt: currentTask.attempt,
       stepOutputs,
       triggerPayload: {},
+      credentials: ownerCredentials,
       heartbeat: async () => {},
     };
 

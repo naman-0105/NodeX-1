@@ -1,7 +1,19 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import pg from 'pg';
 import dotenv from 'dotenv';
 
-dotenv.config();
+// Load .env from current directory and parent workspace roots
+let currentDir = process.cwd();
+for (let i = 0; i < 4; i++) {
+  const envPath = path.join(currentDir, '.env');
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+  const parent = path.dirname(currentDir);
+  if (parent === currentDir) break;
+  currentDir = parent;
+}
 
 const { Pool } = pg;
 

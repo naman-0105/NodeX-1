@@ -5,6 +5,7 @@ import { TransformNode } from './transform-node.js';
 import { IfNode } from './if-node.js';
 import { ApprovalNode } from './approval-node.js';
 import { DelayNode } from './delay-node.js';
+import { SlackNode } from './slack-node.js';
 
 export const nodeTypes: NodeTypes = {
   trigger: TriggerNode,
@@ -13,6 +14,7 @@ export const nodeTypes: NodeTypes = {
   if: IfNode,
   approval: ApprovalNode,
   delay: DelayNode,
+  slack: SlackNode,
 };
 
 export * from './trigger-node.js';
@@ -21,4 +23,5 @@ export * from './transform-node.js';
 export * from './if-node.js';
 export * from './approval-node.js';
 export * from './delay-node.js';
+export * from './slack-node.js';
 export * from './node-badge.js';

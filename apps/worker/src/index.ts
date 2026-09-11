@@ -19,11 +19,23 @@ export * from './queue/connection.js';
 export * from './queue/queues.js';
 export * from './queue/worker.js';
 
+import fs from 'node:fs';
+import path from 'node:path';
 import dotenv from 'dotenv';
 import { WorkflowWorkerService } from './queue/worker.js';
 import { OutboxPollerService } from './outbox/poller.js';
 
-dotenv.config();
+// Load .env from current directory and parent workspace roots
+let currentDir = process.cwd();
+for (let i = 0; i < 4; i++) {
+  const envPath = path.join(currentDir, '.env');
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+  const parent = path.dirname(currentDir);
+  if (parent === currentDir) break;
+  currentDir = parent;
+}
 
 // If run directly as worker process entrypoint
 if (process.env.NODE_ENV !== 'test') {

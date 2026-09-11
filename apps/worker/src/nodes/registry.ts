@@ -5,6 +5,7 @@ import { TransformNode } from './transform.js';
 import { IfNode } from './if.js';
 import { ApprovalNode } from './approval.js';
 import { DelayNode } from './delay.js';
+import { SlackNode } from './slack.js';
 
 export class NodeRegistry {
   private readonly nodes = new Map<string, WorkflowNode>();
@@ -41,6 +42,7 @@ export function createDefaultNodeRegistry(): NodeRegistry {
   registry.register(new IfNode());
   registry.register(new ApprovalNode());
   registry.register(new DelayNode());
+  registry.register(new SlackNode());
   return registry;
 }
 

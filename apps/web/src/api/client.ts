@@ -180,3 +180,60 @@ export async function rejectTask(
     throw new Error(err.error?.message || 'Failed to reject task');
   }
 }
+
+export interface SlackChannelOption {
+  readonly id: string;
+  readonly name: string;
+  readonly isPrivate?: boolean;
+}
+
+export interface IntegrationStatus {
+  readonly slack: {
+    readonly connected: boolean;
+    readonly teamName?: string;
+    readonly updatedAt?: string;
+  };
+}
+
+export async function fetchSlackChannels(): Promise<SlackChannelOption[]> {
+  const res = await fetch(`${API_BASE}/integrations/slack/channels`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch Slack channels');
+  }
+  const data = await res.json();
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return data.channels || [];
+}
+
+export async function fetchIntegrationStatus(): Promise<IntegrationStatus> {
+  const res = await fetch(`${API_BASE}/integrations/status`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch integration status');
+  }
+  return res.json();
+}
+
+export async function saveSlackToken(token: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/integrations/slack/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || 'Failed to save Slack token');
+  }
+}
+
+export async function disconnectIntegration(provider: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/integrations/${provider}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to disconnect ${provider}`);
+  }
+}
+
+

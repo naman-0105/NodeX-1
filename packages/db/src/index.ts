@@ -2,6 +2,7 @@ export * from './pool.js';
 export * from './client.js';
 export * from './migrate.js';
 export * from './schema/index.js';
+export * from './security/encryption.js';
 export {
   eq,
   ne,
