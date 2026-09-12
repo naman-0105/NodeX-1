@@ -293,6 +293,7 @@ export async function processWorkflowExecution(
       stepOutputs,
       triggerPayload: {},
       credentials: ownerCredentials,
+      env: process.env as Record<string, string>,
       heartbeat: async () => {},
     };
 

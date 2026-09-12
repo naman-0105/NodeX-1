@@ -9,6 +9,8 @@ export * from './nodes/transform.js';
 export * from './nodes/if.js';
 export * from './nodes/approval.js';
 export * from './nodes/delay.js';
+export * from './nodes/slack.js';
+export * from './nodes/gemini.js';
 export * from './reliability/lease.js';
 export * from './reliability/heartbeat.js';
 export * from './reliability/retry.js';

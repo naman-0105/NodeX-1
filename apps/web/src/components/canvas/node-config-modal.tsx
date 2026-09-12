@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Trash2, Hash, ExternalLink, RefreshCw, Check, LogOut } from 'lucide-react';
+import { X, Save, Trash2, Hash, ExternalLink, RefreshCw, Check, LogOut, Sparkles } from 'lucide-react';
 import {
   fetchSlackChannels,
   fetchIntegrationStatus,
@@ -615,6 +615,81 @@ export const NodeConfigModal: React.FC<NodeConfigModalProps> = ({
                   </button>
                 </div>
               </div>
+            </div>
+          </>
+        );
+
+      case 'gemini':
+        return (
+          <>
+            {/* Model Selector */}
+            <div>
+              <label style={{ fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                <Sparkles size={13} color="#8b5cf6" /> Gemini Model
+              </label>
+              <select
+                value={config.model || 'gemini-3.6-flash'}
+                onChange={(e) => setConfig({ ...config, model: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  color: '#f8fafc',
+                }}
+              >
+                <option value="gemini-3.6-flash">gemini-3.6-flash (Fast & Lightweight - Recommended)</option>
+                <option value="gemini-2.5-pro">gemini-2.5-pro (Advanced Reasoning & Complex Tasks)</option>
+              </select>
+            </div>
+
+            {/* System Prompt (Optional) */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>
+                System Instructions (Optional)
+              </label>
+              <textarea
+                value={config.systemPrompt || ''}
+                onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
+                placeholder="e.g. You are a helpful AI assistant that summarizes data into concise bullet points."
+                rows={2}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  color: '#f8fafc',
+                  fontSize: '12px',
+                }}
+              />
+            </div>
+
+            {/* Prompt (Required) */}
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '4px' }}>
+                User Prompt
+              </label>
+              <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '6px' }}>
+                You can use dynamic template variables like <code>&#123;&#123;steps.&lt;nodeId&gt;.output&#125;&#125;</code> or <code>&#123;&#123;trigger.&lt;field&gt;&#125;&#125;</code>.
+              </div>
+              <textarea
+                value={config.prompt || ''}
+                onChange={(e) => setConfig({ ...config, prompt: e.target.value })}
+                placeholder="e.g. Please analyze the following customer message and determine the sentiment: {{trigger.message}}"
+                rows={5}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  color: '#f8fafc',
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                }}
+              />
             </div>
           </>
         );

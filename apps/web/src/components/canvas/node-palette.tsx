@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Globe, Code, GitFork, UserCheck, Clock, Hash, Plus } from 'lucide-react';
+import { Play, Globe, Code, GitFork, UserCheck, Clock, Hash, Sparkles, Plus } from 'lucide-react';
 
 interface NodePaletteProps {
   readonly onAddNode: (type: string, label: string) => void;
@@ -13,6 +13,7 @@ const PALETTE_ITEMS = [
   { type: 'approval', label: 'Human Approval', icon: UserCheck, color: '#f97316', desc: 'Pause for human decision' },
   { type: 'delay', label: 'Delay / Wait', icon: Clock, color: '#06b6d4', desc: 'Timer-based non-blocking pause' },
   { type: 'slack', label: 'Slack Message', icon: Hash, color: '#e01e5a', desc: 'Post message to channel' },
+  { type: 'gemini', label: 'Gemini AI', icon: Sparkles, color: '#8b5cf6', desc: 'Generate AI content with Gemini' },
 ];
 
 export const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
