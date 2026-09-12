@@ -15,48 +15,92 @@ export interface DelayNodeData {
 
 export const DelayNode: React.FC<NodeProps> = ({ data, selected }) => {
   const nodeData = (data || {}) as DelayNodeData;
-  const duration = nodeData.config?.durationSeconds ? `${nodeData.config.durationSeconds}s` : 'Delay Timer';
+  const duration = nodeData.config?.durationSeconds
+    ? `${nodeData.config.durationSeconds}s delay`
+    : 'Timer Pause';
 
   return (
     <div
       style={{
-        padding: '12px 16px',
+        width: '240px',
+        padding: '10px 12px',
         borderRadius: '8px',
-        backgroundColor: '#1e293b',
-        border: `2px solid ${selected ? '#06b6d4' : '#334155'}`,
-        color: '#f8fafc',
-        minWidth: '180px',
+        backgroundColor: '#ffffff',
+        border: `1px solid ${selected ? '#0f172a' : '#e2e8f0'}`,
+        boxShadow: selected
+          ? '0 0 0 1px #0f172a, 0 2px 4px 0 rgb(0 0 0 / 0.06)'
+          : '0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05)',
         position: 'relative',
-        boxShadow: selected ? '0 0 12px rgba(6, 182, 212, 0.4)' : '0 4px 6px rgba(0,0,0,0.3)',
+        transition: 'all 0.15s ease',
       }}
     >
       <NodeStatusBadge status={nodeData.executionStatus} />
+
       <Handle
         type="target"
         position={Position.Left}
-        style={{ background: '#06b6d4', width: 8, height: 8 }}
+        style={{
+          width: 8,
+          height: 8,
+          backgroundColor: '#ffffff',
+          border: '1.5px solid #94a3b8',
+        }}
       />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div
           style={{
-            backgroundColor: 'rgba(6, 182, 212, 0.2)',
-            color: '#06b6d4',
-            padding: '6px',
+            width: '28px',
+            height: '28px',
+            backgroundColor: '#ecfeff',
+            border: '1px solid #cffafe',
+            color: '#0891b2',
             borderRadius: '6px',
             display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
-          <Clock size={16} />
+          <Clock size={15} />
         </div>
-        <div>
-          <div style={{ fontSize: '13px', fontWeight: 600 }}>{nodeData.label || 'Delay / Wait'}</div>
-          <div style={{ fontSize: '10px', color: '#94a3b8' }}>{duration}</div>
+
+        <div style={{ overflow: 'hidden', flex: 1 }}>
+          <div
+            style={{
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#0f172a',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {nodeData.label || 'Delay / Wait'}
+          </div>
+          <div
+            style={{
+              fontSize: '11px',
+              color: '#64748b',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {duration}
+          </div>
         </div>
       </div>
+
       <Handle
         type="source"
         position={Position.Right}
-        style={{ background: '#06b6d4', width: 8, height: 8 }}
+        style={{
+          width: 8,
+          height: 8,
+          backgroundColor: '#ffffff',
+          border: '1.5px solid #94a3b8',
+        }}
       />
     </div>
   );

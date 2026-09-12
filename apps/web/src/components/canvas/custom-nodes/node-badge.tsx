@@ -1,5 +1,6 @@
 import React from 'react';
 import type { TaskStatus } from '@nodex/shared';
+import { Loader2 } from 'lucide-react';
 
 interface NodeStatusBadgeProps {
   readonly status?: TaskStatus;
@@ -11,17 +12,53 @@ export const NodeStatusBadge: React.FC<NodeStatusBadgeProps> = ({ status }) => {
   const getStyle = () => {
     switch (status) {
       case 'SUCCEEDED':
-        return { bg: 'rgba(16, 185, 129, 0.2)', border: '#10b981', text: '#34d399' };
+        return {
+          bg: '#f0fdf4',
+          border: '#bbf7d0',
+          dot: '#16a34a',
+          text: '#166534',
+          label: 'Success',
+        };
       case 'FAILED':
-        return { bg: 'rgba(239, 68, 68, 0.2)', border: '#ef4444', text: '#f87171' };
+        return {
+          bg: '#fef2f2',
+          border: '#fecaca',
+          dot: '#dc2626',
+          text: '#991b1b',
+          label: 'Failed',
+        };
       case 'WAITING':
-        return { bg: 'rgba(245, 158, 11, 0.2)', border: '#f59e0b', text: '#fbbf24' };
+        return {
+          bg: '#fffbeb',
+          border: '#fde68a',
+          dot: '#d97706',
+          text: '#92400e',
+          label: 'Waiting',
+        };
       case 'RUNNING':
-        return { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6', text: '#60a5fa' };
+        return {
+          bg: '#eff6ff',
+          border: '#bfdbfe',
+          dot: '#2563eb',
+          text: '#1e40af',
+          label: 'Running',
+        };
       case 'SKIPPED':
-        return { bg: 'rgba(148, 163, 184, 0.2)', border: '#64748b', text: '#94a3b8' };
+        return {
+          bg: '#f8fafc',
+          border: '#e2e8f0',
+          dot: '#94a3b8',
+          text: '#64748b',
+          label: 'Skipped',
+        };
       default:
-        return { bg: 'rgba(100, 116, 139, 0.2)', border: '#64748b', text: '#cbd5e1' };
+        return {
+          bg: '#f8fafc',
+          border: '#e2e8f0',
+          dot: '#94a3b8',
+          text: '#64748b',
+          label: status,
+        };
     }
   };
 
@@ -31,21 +68,35 @@ export const NodeStatusBadge: React.FC<NodeStatusBadgeProps> = ({ status }) => {
     <div
       style={{
         position: 'absolute',
-        top: -10,
-        right: -10,
+        top: -9,
+        right: 12,
         backgroundColor: style.bg,
         border: `1px solid ${style.border}`,
         color: style.text,
         fontSize: '10px',
-        fontWeight: 700,
-        padding: '2px 6px',
-        borderRadius: '12px',
-        textTransform: 'uppercase',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
+        fontWeight: 600,
+        padding: '1px 7px',
+        borderRadius: '10px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
         zIndex: 10,
       }}
     >
-      {status}
+      {status === 'RUNNING' ? (
+        <Loader2 size={9} className="animate-spin" color={style.dot} />
+      ) : (
+        <span
+          style={{
+            width: '5px',
+            height: '5px',
+            borderRadius: '50%',
+            backgroundColor: style.dot,
+          }}
+        />
+      )}
+      <span>{style.label}</span>
     </div>
   );
 };

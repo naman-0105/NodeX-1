@@ -140,6 +140,16 @@ export async function fetchExecution(id: string): Promise<ExecutionDetails> {
   return res.json();
 }
 
+export async function fetchWorkflowExecutions(
+  workflowId: string,
+  limit: number = 20,
+  offset: number = 0
+): Promise<{ executions: Array<{ id: string; workflowId: string; workflowVersionId: string; triggerType: string; status: ExecutionStatus; startedAt?: string; finishedAt?: string; createdAt: string }> }> {
+  const res = await fetch(`${API_BASE}/workflows/${workflowId}/executions?limit=${limit}&offset=${offset}`);
+  if (!res.ok) throw new Error(`Failed to fetch executions for workflow ${workflowId}`);
+  return res.json();
+}
+
 export async function cancelExecution(id: string): Promise<void> {
   const res = await fetch(`${API_BASE}/executions/${id}/cancel`, {
     method: 'POST',

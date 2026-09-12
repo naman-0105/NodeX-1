@@ -16,62 +16,93 @@ export interface SlackNodeData {
 export const SlackNode: React.FC<NodeProps> = ({ data, selected }) => {
   const nodeData = (data || {}) as SlackNodeData;
   const channel = nodeData.config?.channel || '#general';
-  const message = nodeData.config?.message || 'Send message to Slack';
+  const formattedChannel = channel.startsWith('#') || channel.startsWith('C') ? channel : `#${channel}`;
 
   return (
     <div
       style={{
-        padding: '12px 16px',
+        width: '240px',
+        padding: '10px 12px',
         borderRadius: '8px',
-        backgroundColor: '#1e293b',
-        border: `2px solid ${selected ? '#e01e5a' : '#334155'}`,
-        color: '#f8fafc',
-        minWidth: '180px',
+        backgroundColor: '#ffffff',
+        border: `1px solid ${selected ? '#0f172a' : '#e2e8f0'}`,
+        boxShadow: selected
+          ? '0 0 0 1px #0f172a, 0 2px 4px 0 rgb(0 0 0 / 0.06)'
+          : '0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05)',
         position: 'relative',
-        boxShadow: selected ? '0 0 12px rgba(224, 30, 90, 0.4)' : '0 4px 6px rgba(0,0,0,0.3)',
+        transition: 'all 0.15s ease',
       }}
     >
       <NodeStatusBadge status={nodeData.executionStatus} />
+
       <Handle
         type="target"
         position={Position.Left}
-        style={{ background: '#e01e5a', width: 8, height: 8 }}
+        style={{
+          width: 8,
+          height: 8,
+          backgroundColor: '#ffffff',
+          border: '1.5px solid #94a3b8',
+        }}
       />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div
           style={{
-            backgroundColor: 'rgba(224, 30, 90, 0.2)',
+            width: '28px',
+            height: '28px',
+            backgroundColor: '#fdf2f8',
+            border: '1px solid #fce7f3',
             color: '#e01e5a',
-            padding: '6px',
             borderRadius: '6px',
             display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
-          <Hash size={16} />
+          <Hash size={15} />
         </div>
-        <div style={{ overflow: 'hidden' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600 }}>{nodeData.label || 'Slack Message'}</div>
+
+        <div style={{ overflow: 'hidden', flex: 1 }}>
           <div
             style={{
-              fontSize: '10px',
-              color: '#94a3b8',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#0f172a',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              maxWidth: '130px',
             }}
           >
-            <span style={{ color: '#f472b6', fontWeight: 700 }}>
-              {channel.startsWith('#') || channel.startsWith('C') ? channel : `#${channel}`}
+            {nodeData.label || 'Slack Message'}
+          </div>
+          <div
+            style={{
+              fontSize: '11px',
+              color: '#64748b',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            <span style={{ fontWeight: 600, color: '#e01e5a', marginRight: '4px' }}>
+              {formattedChannel}
             </span>
-            {message ? `: ${message}` : ''}
+            {nodeData.config?.message ? nodeData.config.message : 'Send message'}
           </div>
         </div>
       </div>
+
       <Handle
         type="source"
         position={Position.Right}
-        style={{ background: '#e01e5a', width: 8, height: 8 }}
+        style={{
+          width: 8,
+          height: 8,
+          backgroundColor: '#ffffff',
+          border: '1.5px solid #94a3b8',
+        }}
       />
     </div>
   );

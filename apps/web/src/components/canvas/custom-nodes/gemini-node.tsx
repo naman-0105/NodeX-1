@@ -22,54 +22,88 @@ export const GeminiNode: React.FC<NodeProps> = ({ data, selected }) => {
   return (
     <div
       style={{
-        padding: '12px 16px',
+        width: '240px',
+        padding: '10px 12px',
         borderRadius: '8px',
-        backgroundColor: '#1e293b',
-        border: `2px solid ${selected ? '#8b5cf6' : '#334155'}`,
-        color: '#f8fafc',
-        minWidth: '180px',
+        backgroundColor: '#ffffff',
+        border: `1px solid ${selected ? '#0f172a' : '#e2e8f0'}`,
+        boxShadow: selected
+          ? '0 0 0 1px #0f172a, 0 2px 4px 0 rgb(0 0 0 / 0.06)'
+          : '0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05)',
         position: 'relative',
-        boxShadow: selected ? '0 0 12px rgba(139, 92, 246, 0.4)' : '0 4px 6px rgba(0,0,0,0.3)',
+        transition: 'all 0.15s ease',
       }}
     >
       <NodeStatusBadge status={nodeData.executionStatus} />
+
       <Handle
         type="target"
         position={Position.Left}
-        style={{ background: '#8b5cf6', width: 8, height: 8 }}
+        style={{
+          width: 8,
+          height: 8,
+          backgroundColor: '#ffffff',
+          border: '1.5px solid #94a3b8',
+        }}
       />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div
           style={{
-            backgroundColor: 'rgba(139, 92, 246, 0.2)',
-            color: '#8b5cf6',
-            padding: '6px',
+            width: '28px',
+            height: '28px',
+            backgroundColor: '#f5f3ff',
+            border: '1px solid #ede9fe',
+            color: '#6d28d9',
             borderRadius: '6px',
             display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
-          <Sparkles size={16} />
+          <Sparkles size={15} />
         </div>
-        <div style={{ overflow: 'hidden' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600 }}>{nodeData.label || 'Gemini AI'}</div>
+
+        <div style={{ overflow: 'hidden', flex: 1 }}>
           <div
             style={{
-              fontSize: '10px',
-              color: '#94a3b8',
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#0f172a',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              maxWidth: '130px',
             }}
           >
-            <span style={{ color: '#c084fc', fontWeight: 700 }}>{model}</span>: {prompt}
+            {nodeData.label || 'Gemini AI'}
+          </div>
+          <div
+            style={{
+              fontSize: '11px',
+              color: '#64748b',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            <span style={{ fontWeight: 600, color: '#6d28d9', marginRight: '4px' }}>
+              {model}
+            </span>
+            {prompt}
           </div>
         </div>
       </div>
+
       <Handle
         type="source"
         position={Position.Right}
-        style={{ background: '#8b5cf6', width: 8, height: 8 }}
+        style={{
+          width: 8,
+          height: 8,
+          backgroundColor: '#ffffff',
+          border: '1.5px solid #94a3b8',
+        }}
       />
     </div>
   );

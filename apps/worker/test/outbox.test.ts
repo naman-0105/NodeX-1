@@ -38,9 +38,8 @@ describe('Transactional Outbox Poller Integration Tests', () => {
     expect(inserted.id).toBeDefined();
     expect(inserted.publishedAt).toBeNull();
 
-    // 2. Poll and publish
-    const publishedCount = await pollAndPublishOutbox(10);
-    expect(publishedCount).toBeGreaterThanOrEqual(1);
+    // 2. Poll and publish (or if background worker already picked it up)
+    await pollAndPublishOutbox(10);
 
     // 3. Verify event is now marked published in Postgres
     const [updated] = await db

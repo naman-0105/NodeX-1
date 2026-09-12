@@ -15,7 +15,7 @@ import {
 } from '@xyflow/react';
 import { nodeTypes } from './custom-nodes/index.js';
 import { NodePalette } from './node-palette.js';
-import { NodeConfigModal } from './node-config-modal.js';
+import { NodeConfigDrawer } from './node-config-drawer.js';
 import type { TaskInstanceSummary } from '../../api/client.js';
 
 interface WorkflowCanvasProps {
@@ -67,7 +67,16 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
 
   const handleConnect: OnConnect = useCallback(
     (connection) => {
-      onEdgesChange(addEdge(connection, edges));
+      onEdgesChange(
+        addEdge(
+          {
+            ...connection,
+            animated: true,
+            style: { stroke: '#94a3b8', strokeWidth: 1.5 },
+          },
+          edges
+        )
+      );
     },
     [edges, onEdgesChange]
   );
@@ -75,8 +84,8 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
   const handleAddNode = (type: string, label: string) => {
     const id = `${type}_${Date.now().toString(36).substring(4)}`;
     const position = {
-      x: 100 + nodes.length * 40,
-      y: 100 + nodes.length * 40,
+      x: 120 + nodes.length * 50,
+      y: 120 + nodes.length * 30,
     };
     const newNode: Node = {
       id,
@@ -115,7 +124,7 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
     <div style={{ display: 'flex', width: '100%', height: '100%', position: 'relative' }}>
       {!readOnly && <NodePalette onAddNode={handleAddNode} />}
 
-      <div style={{ flex: 1, height: '100%', position: 'relative' }}>
+      <div style={{ flex: 1, height: '100%', position: 'relative', backgroundColor: '#f8fafc' }}>
         <ReactFlow
           nodes={decoratedNodes}
           edges={edges}
@@ -126,15 +135,19 @@ export const WorkflowCanvas: React.FC<WorkflowCanvasProps> = ({
           onNodeClick={handleNodeClick}
           onNodeDoubleClick={handleNodeDoubleClick}
           fitView
+          snapToGrid={true}
+          snapGrid={[18, 18]}
         >
-          <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#334155" />
+          <Background variant={BackgroundVariant.Dots} gap={18} size={1} color="#cbd5e1" />
           <Controls />
         </ReactFlow>
       </div>
 
       {editingNode && (
-        <NodeConfigModal
+        <NodeConfigDrawer
           node={editingNode}
+          nodes={nodes}
+          edges={edges}
           onClose={() => setEditingNode(null)}
           onSave={handleSaveNodeConfig}
           onDelete={handleDeleteNode}

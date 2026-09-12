@@ -4,10 +4,12 @@ import type { WorkflowDefinition } from '@nodex/shared';
 import { Navbar } from './components/common/navbar.js';
 import { WorkflowCanvas } from './components/canvas/workflow-canvas.js';
 import { ExecutionDebugger } from './components/debugger/execution-debugger.js';
+import { RunsHistoryDrawer } from './components/debugger/runs-history-drawer.js';
 import {
   fetchWorkflows,
   fetchWorkflow,
   createWorkflow,
+  updateWorkflow,
   publishWorkflowVersion,
   triggerWorkflow,
   type WorkflowSummary,
@@ -18,20 +20,20 @@ const DEFAULT_STARTER_DEFINITION: WorkflowDefinition = {
     {
       id: 'start',
       type: 'trigger',
-      config: {},
-      position: { x: 100, y: 150 },
+      config: { triggerType: 'manual' },
+      position: { x: 100, y: 180 },
     },
     {
       id: 'http_fetch',
       type: 'http',
       config: { url: 'https://httpbin.org/get', method: 'GET' },
-      position: { x: 340, y: 150 },
+      position: { x: 380, y: 180 },
     },
     {
       id: 'transform_json',
       type: 'transform',
-      config: { code: 'return { processed: true, data: steps.http_fetch.output };' },
-      position: { x: 580, y: 150 },
+      config: { code: 'return {\n  processed: true,\n  origin: steps.http_fetch.output?.origin || "unknown",\n  timestamp: new Date().toISOString()\n};' },
+      position: { x: 660, y: 180 },
     },
   ],
   edges: [
@@ -48,6 +50,7 @@ export function App() {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [activeExecutionId, setActiveExecutionId] = useState<string | null>(null);
   const [isDebuggerOpen, setIsDebuggerOpen] = useState(false);
+  const [isRunsHistoryOpen, setIsRunsHistoryOpen] = useState(false);
   const [isTriggering, setIsTriggering] = useState(false);
 
   // 1. Initial load of workflows from API
@@ -121,6 +124,11 @@ export function App() {
     }
   };
 
+  const handleRenameWorkflow = async (id: string, newName: string) => {
+    const updated = await updateWorkflow(id, { name: newName });
+    setWorkflows(workflows.map((w) => (w.id === id ? { ...w, name: updated.name } : w)));
+  };
+
   const handlePublishVersion = async () => {
     if (!currentWorkflowId) return;
 
@@ -166,7 +174,7 @@ export function App() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
       <Navbar
         workflows={workflows}
         currentWorkflowId={currentWorkflowId}
@@ -175,12 +183,15 @@ export function App() {
           setIsDebuggerOpen(false);
         }}
         onNewWorkflow={handleNewWorkflow}
+        onRenameWorkflow={handleRenameWorkflow}
         onPublishVersion={handlePublishVersion}
         onTriggerExecution={handleTriggerExecution}
         currentVersionNumber={currentVersionNumber}
         isTriggering={isTriggering}
         activeExecutionId={activeExecutionId}
         onToggleDebugger={() => setIsDebuggerOpen(!isDebuggerOpen)}
+        onToggleRunsHistory={() => setIsRunsHistoryOpen(!isRunsHistoryOpen)}
+        isRunsHistoryOpen={isRunsHistoryOpen}
       />
 
       <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -200,6 +211,18 @@ export function App() {
           />
         )}
       </main>
+
+      {/* Runs History Drawer */}
+      <RunsHistoryDrawer
+        workflowId={currentWorkflowId}
+        isOpen={isRunsHistoryOpen}
+        activeExecutionId={activeExecutionId}
+        onClose={() => setIsRunsHistoryOpen(false)}
+        onSelectExecution={(execId) => {
+          setActiveExecutionId(execId);
+          setIsDebuggerOpen(true);
+        }}
+      />
     </div>
   );
 }
