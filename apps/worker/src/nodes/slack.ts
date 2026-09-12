@@ -43,10 +43,15 @@ export class SlackNode implements WorkflowNode<SlackNodeInput, SlackNodeOutput> 
     const creds = context.credentials as Record<string, any> | undefined;
     const slackCred = creds?.slack;
     const token =
-      (typeof slackCred === 'object' ? slackCred?.accessToken : undefined) ||
+      (typeof slackCred === 'object'
+        ? slackCred?.accessToken || slackCred?.token || slackCred?.botToken
+        : undefined) ||
+      (typeof slackCred === 'string' ? slackCred : undefined) ||
       creds?.accessToken ||
       creds?.token ||
-      input.token;
+      input.token ||
+      (input as any).botToken ||
+      (input as any).accessToken;
 
     if (!token || typeof token !== 'string') {
       return {

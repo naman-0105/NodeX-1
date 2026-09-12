@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import type { Node, Edge } from '@xyflow/react';
 import type { WorkflowDefinition } from '@nodex/shared';
+import { AuthProvider, useAuth } from './context/auth-context.js';
+import { AuthCard } from './components/auth/auth-card.js';
+import { GoogleCallback } from './components/auth/google-callback.js';
 import { Navbar } from './components/common/navbar.js';
 import { WorkflowCanvas } from './components/canvas/workflow-canvas.js';
 import { ExecutionDebugger } from './components/debugger/execution-debugger.js';
 import { RunsHistoryDrawer } from './components/debugger/runs-history-drawer.js';
+import { Loader2 } from 'lucide-react';
 import {
   fetchWorkflows,
   fetchWorkflow,
@@ -32,7 +36,9 @@ const DEFAULT_STARTER_DEFINITION: WorkflowDefinition = {
     {
       id: 'transform_json',
       type: 'transform',
-      config: { code: 'return {\n  processed: true,\n  origin: steps.http_fetch.output?.origin || "unknown",\n  timestamp: new Date().toISOString()\n};' },
+      config: {
+        code: 'return {\n  processed: true,\n  origin: steps.http_fetch.output?.origin || "unknown",\n  timestamp: new Date().toISOString()\n};',
+      },
       position: { x: 660, y: 180 },
     },
   ],
@@ -42,7 +48,8 @@ const DEFAULT_STARTER_DEFINITION: WorkflowDefinition = {
   ],
 };
 
-export function App() {
+function MainWorkspace() {
+  const { isAuthenticated, isLoading } = useAuth();
   const [workflows, setWorkflows] = useState<WorkflowSummary[]>([]);
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null);
   const [currentVersionNumber, setCurrentVersionNumber] = useState<number | undefined>();
@@ -53,8 +60,14 @@ export function App() {
   const [isRunsHistoryOpen, setIsRunsHistoryOpen] = useState(false);
   const [isTriggering, setIsTriggering] = useState(false);
 
-  // 1. Initial load of workflows from API
+  // Check if we are in OAuth callback mode
+  const isCallback = window.location.pathname.startsWith('/auth/callback') || new URLSearchParams(window.location.search).has('code');
+  const [isProcessingCallback, setIsProcessingCallback] = useState(isCallback);
+
+  // 1. Initial load of workflows from API when authenticated
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     async function loadWorkflows() {
       try {
         const list = await fetchWorkflows();
@@ -62,7 +75,7 @@ export function App() {
           setWorkflows(list);
           setCurrentWorkflowId(list[0].id);
         } else {
-          // Create initial starter workflow
+          // Create initial starter workflow for this user
           const created = await createWorkflow('Order Ingestion Pipeline', DEFAULT_STARTER_DEFINITION);
           setWorkflows([created.workflow]);
           setCurrentWorkflowId(created.workflow.id);
@@ -80,12 +93,13 @@ export function App() {
         setEdges(DEFAULT_STARTER_DEFINITION.edges.map((e) => ({ ...e })));
       }
     }
+
     loadWorkflows();
-  }, []);
+  }, [isAuthenticated]);
 
   // 2. Load workflow details when currentWorkflowId changes
   useEffect(() => {
-    if (!currentWorkflowId) return;
+    if (!currentWorkflowId || !isAuthenticated) return;
 
     async function loadCurrentWorkflow() {
       try {
@@ -109,7 +123,7 @@ export function App() {
     }
 
     loadCurrentWorkflow();
-  }, [currentWorkflowId]);
+  }, [currentWorkflowId, isAuthenticated]);
 
   const handleNewWorkflow = async () => {
     const name = prompt('Enter new workflow name:', `Workflow ${workflows.length + 1}`);
@@ -173,6 +187,22 @@ export function App() {
     }
   };
 
+  if (isProcessingCallback) {
+    return <GoogleCallback onComplete={() => setIsProcessingCallback(false)} />;
+  }
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', width: '100vw', backgroundColor: '#f8fafc' }}>
+        <Loader2 size={24} className="animate-spin" color="#0f172a" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthCard />;
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#f8fafc' }}>
       <Navbar
@@ -224,5 +254,13 @@ export function App() {
         }}
       />
     </div>
+  );
+}
+
+export function App() {
+  return (
+    <AuthProvider>
+      <MainWorkspace />
+    </AuthProvider>
   );
 }

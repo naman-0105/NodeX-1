@@ -28,6 +28,7 @@ import {
   type SlackChannelOption,
   type IntegrationStatus,
 } from '../../api/client.js';
+import { useAuth } from '../../context/auth-context.js';
 import type { Node, Edge } from '@xyflow/react';
 
 interface NodeConfigDrawerProps {
@@ -56,6 +57,7 @@ export const NodeConfigDrawer: React.FC<NodeConfigDrawerProps> = ({
 }) => {
   if (!node) return null;
 
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'setup' | 'test'>('setup');
   const [label, setLabel] = useState(node.data.label || '');
   const [config, setConfig] = useState<Record<string, any>>(node.data.config || {});
@@ -144,8 +146,11 @@ export const NodeConfigDrawer: React.FC<NodeConfigDrawerProps> = ({
     const height = 700;
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
+    const authUrl = user?.id
+      ? `/api/integrations/slack/authorize?ownerId=${encodeURIComponent(user.id)}`
+      : '/api/integrations/slack/authorize';
     const popup = window.open(
-      '/api/integrations/slack/authorize',
+      authUrl,
       'Slack OAuth',
       `width=${width},height=${height},left=${left},top=${top},status=no,resizable=yes`
     );

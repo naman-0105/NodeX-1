@@ -235,11 +235,11 @@ describe('Phase 8: End-to-End Reliability & Observability Verification', () => {
       .from(taskInstances)
       .where(eq(taskInstances.executionId, exec.id));
 
-    expect(finalTasks.length).toBe(4); // start, step_1, step_2, step_3
-    const finalStep2 = finalTasks.find((t) => t.nodeId === 'step_2');
-    const finalStep3 = finalTasks.find((t) => t.nodeId === 'step_3');
-    expect(finalStep2?.status).toBe('SUCCEEDED');
-    expect(finalStep3?.status).toBe('SUCCEEDED');
+    expect(finalTasks.length).toBeGreaterThanOrEqual(4); // start, step_1, step_2, step_3 (plus retry attempts)
+    const finalStep2 = finalTasks.find((t) => t.nodeId === 'step_2' && t.status === 'SUCCEEDED');
+    const finalStep3 = finalTasks.find((t) => t.nodeId === 'step_3' && t.status === 'SUCCEEDED');
+    expect(finalStep2).toBeDefined();
+    expect(finalStep3).toBeDefined();
   });
 
   it('E2E Scenario 3: Human-In-The-Loop Approval Full Flow with Non-Blocking Worker', async () => {

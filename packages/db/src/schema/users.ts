@@ -4,7 +4,11 @@ import { sql } from 'drizzle-orm';
 export const users = pgTable('users', {
   id: uuid('id').default(sql`gen_random_uuid()`).primaryKey(),
   email: text('email').notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
+  passwordHash: text('password_hash'),
+  name: text('name'),
+  avatarUrl: text('avatar_url'),
+  googleId: text('google_id').unique(),
+  authProvider: text('auth_provider').notNull().default('local'),
   role: text('role').notNull().default('user'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

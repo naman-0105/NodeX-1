@@ -49,9 +49,10 @@ export async function createWorkflowHandler(
   next: NextFunction
 ): Promise<void> {
   try {
-    const defaultOwnerId = req.body.ownerId || '00000000-0000-0000-0000-000000000001';
+    const ownerId =
+      req.user?.id || req.body.ownerId || '00000000-0000-0000-0000-000000000001';
     const result = await workflowService.createWorkflow(
-      defaultOwnerId,
+      ownerId,
       req.body.name,
       req.body.definition
     );
@@ -81,7 +82,8 @@ export async function listWorkflowsHandler(
   next: NextFunction
 ): Promise<void> {
   try {
-    const ownerId = req.query.ownerId as string | undefined;
+    const queryOwnerId = req.query.ownerId as string | undefined;
+    const ownerId = queryOwnerId || req.user?.id;
     const list = await workflowService.listWorkflows(ownerId);
     res.json({ workflows: list });
   } catch (err) {

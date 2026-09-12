@@ -9,6 +9,7 @@ import {
   credentials,
   decrypt,
   eq,
+  inArray,
   sql,
   desc,
 } from '@nodex/db';
@@ -254,14 +255,22 @@ export async function processWorkflowExecution(
       }
     }
 
-    // Load decrypted credentials for workflow owner
+    // Load decrypted credentials for workflow owner (and fallback to default dev user)
     const ownerCredentials: Record<string, any> = {};
-    if (execRow.ownerId) {
+    const ownerIdsToTry = [
+      execRow.ownerId,
+      '00000000-0000-0000-0000-000000000001',
+    ].filter(Boolean) as string[];
+
+    if (ownerIdsToTry.length > 0) {
       try {
         const credRows = await db
           .select()
           .from(credentials)
-          .where(eq(credentials.ownerId, execRow.ownerId));
+          .where(inArray(credentials.ownerId, ownerIdsToTry));
+
+        // Sort so the workflow owner's credentials take precedence over default dev user
+        credRows.sort((a, b) => (a.ownerId === execRow.ownerId ? 1 : -1));
 
         for (const cred of credRows) {
           try {

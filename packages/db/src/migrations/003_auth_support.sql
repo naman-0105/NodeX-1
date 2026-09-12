@@ -1,0 +1,6 @@
+-- Migration 003: Auth Support (OAuth & User Profiles)
+ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider TEXT NOT NULL DEFAULT 'local';

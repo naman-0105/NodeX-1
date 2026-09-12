@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Play, UploadCloud, Plus, History, Pencil, Check, X, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Play,
+  UploadCloud,
+  Plus,
+  History,
+  Pencil,
+  Check,
+  X,
+  Loader2,
+  LogOut,
+} from 'lucide-react';
 import type { WorkflowSummary } from '../../api/client.js';
+import { useAuth } from '../../context/auth-context.js';
 
 interface NavbarProps {
   readonly workflows: WorkflowSummary[];
@@ -33,16 +44,29 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleRunsHistory,
   isRunsHistoryOpen = false,
 }) => {
+  const { user, logout } = useAuth();
   const currentWorkflow = workflows.find((w) => w.id === currentWorkflowId);
   const [isEditingName, setIsEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (currentWorkflow) {
       setNameInput(currentWorkflow.name);
     }
   }, [currentWorkflow]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleStartEditing = () => {
     if (currentWorkflow) {
@@ -79,6 +103,15 @@ export const Navbar: React.FC<NavbarProps> = ({
       setIsEditingName(false);
       setNameInput(currentWorkflow?.name || '');
     }
+  };
+
+  const getInitials = () => {
+    if (!user) return 'U';
+    if (user.name) {
+      const parts = user.name.split(' ');
+      return parts.map((p) => p[0]).join('').substring(0, 2).toUpperCase();
+    }
+    return user.email.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -273,7 +306,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Right: Actions */}
+      {/* Right: Actions & User Avatar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {/* Runs History Toggle */}
         {onToggleRunsHistory && (
@@ -395,6 +428,102 @@ export const Navbar: React.FC<NavbarProps> = ({
           )}
           {isTriggering ? 'Running...' : 'Test Step / Run'}
         </button>
+
+        {/* User Profile / Sign Out Dropdown */}
+        {user && (
+          <div ref={userMenuRef} style={{ position: 'relative', marginLeft: '4px' }}>
+            <button
+              type="button"
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              title={user.email}
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                backgroundColor: '#f1f5f9',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#0f172a',
+                overflow: 'hidden',
+                padding: 0,
+              }}
+            >
+              {user.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name || user.email}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <span>{getInitials()}</span>
+              )}
+            </button>
+
+            {isUserMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '40px',
+                  width: '220px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+                  zIndex: 200,
+                  padding: '6px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                <div style={{ padding: '8px 10px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {user.name || 'NodeX User'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {user.email}
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px', textTransform: 'capitalize' }}>
+                    Provider: {user.authProvider}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    logout();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '8px 10px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: '#dc2626',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <LogOut size={14} /> Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

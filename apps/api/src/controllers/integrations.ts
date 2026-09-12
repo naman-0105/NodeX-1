@@ -11,7 +11,13 @@ function getOwnerId(req: Request): string {
   const queryOwnerId = req.query.ownerId as string | undefined;
   const bodyOwnerId = req.body?.ownerId as string | undefined;
   const headerOwnerId = req.headers['x-owner-id'] as string | undefined;
-  return queryOwnerId || bodyOwnerId || headerOwnerId || '00000000-0000-0000-0000-000000000001';
+  return (
+    req.user?.id ||
+    queryOwnerId ||
+    bodyOwnerId ||
+    headerOwnerId ||
+    '00000000-0000-0000-0000-000000000001'
+  );
 }
 
 export async function slackAuthorizeHandler(

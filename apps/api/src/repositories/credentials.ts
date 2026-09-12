@@ -9,7 +9,8 @@ import {
 
 export async function findCredential(
   ownerId: string,
-  provider: string
+  provider: string,
+  includeFallback: boolean = false
 ): Promise<Credential | null> {
   const [cred] = await db
     .select()
@@ -22,7 +23,24 @@ export async function findCredential(
     )
     .limit(1);
 
-  return cred || null;
+  if (cred) return cred;
+
+  // Fallback to default dev user if not found for specific user
+  if (includeFallback && ownerId !== '00000000-0000-0000-0000-000000000001') {
+    const [fallbackCred] = await db
+      .select()
+      .from(credentials)
+      .where(
+        and(
+          eq(credentials.ownerId, '00000000-0000-0000-0000-000000000001'),
+          eq(credentials.provider, provider)
+        )
+      )
+      .limit(1);
+    return fallbackCred || null;
+  }
+
+  return null;
 }
 
 export async function saveCredential(
@@ -31,7 +49,7 @@ export async function saveCredential(
   encryptedData: string,
   keyVersion: number = 1
 ): Promise<Credential> {
-  const existing = await findCredential(ownerId, provider);
+  const existing = await findCredential(ownerId, provider, false);
 
   if (existing) {
     const [updated] = await db
